@@ -102,6 +102,29 @@ class MatrixTests(unittest.TestCase):
             self.build(courier_ids=[f"C{i}" for i in range(101)],
                        order_ids=[f"O{i}" for i in range(100)])
 
+    def test_unbounded_durations_fail_with_contract_error(self):
+        for value in (10**400, 1e300, 2_147_483_648):
+            with self.subTest(value_type=type(value).__name__), self.assertRaises(MatrixInputError):
+                self.build({"code": "Ok", "durations": [[value, 2], [1, 2]]})
+
+    def test_max_duration_boundary_is_accepted(self):
+        m = self.build({"code": "Ok", "durations": [[2_147_483_647, 2], [1, 2]]})
+        self.assertEqual(m.pickup_seconds[("C1", "O1")], 2_147_483_647)
+
+    def test_waypoint_array_count_is_checked(self):
+        good = {"code": "Ok", "durations": [[1, 2], [3, 4]],
+                "sources": [{}, {}], "destinations": [{}, {}]}
+        self.assertEqual(len(self.build(good).pickup_seconds), 4)
+        for key, bad in (("sources", [{}]), ("destinations", [{}, {}, {}]),
+                         ("sources", "not-a-list")):
+            with self.subTest(key=key, bad=bad), self.assertRaises(MatrixInputError):
+                self.build({**good, key: bad})
+
+    def test_non_utf8_extra_data_is_contract_error(self):
+        with self.assertRaises(MatrixInputError):
+            self.build({"code": "Ok", "durations": [[1, 2], [3, 4]],
+                        "metadata": "\ud800"})
+
     def test_one_way_asymmetric_estimates_are_preserved(self):
         m = self.build({"code": "Ok", "durations": [[4, 17], [18, 7]]})
         self.assertEqual(m.pickup_seconds[("C1", "O2")], 17)
