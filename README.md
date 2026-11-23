@@ -33,3 +33,11 @@ Primero fijar el alcance: arquitectura, compilación, pruebas unitarias e instru
 ## Cambio controlado
 
 Nada de auto-merge, producción, DNS, releases ni publicación. No introducir secretos, PII, datos de clientes o parámetros comerciales protegidos. Cada PR deberá referenciar decisiones de Notion, issues y commit SHA, e indicar evidencia PASS/FAIL/PENDIENTE. No existe sincronización automática de decisiones entre GitHub y Notion.
+
+## INT-002: contrato experimental de matrices (PR apilado)
+
+`routing_matrix.parse_osrm_table` convierte una **respuesta OSRM Table suministrada** (sin red) en el mapa `pickup_seconds` que ya acepta `dispatch()`, con huella SHA-256 del JSON y trazabilidad declarativa. No confirma cartografía real, tráfico, dataset o perfil de motocicleta. No realiza HTTP.
+
+[ADR-002](docs/ADR-002-routing-matrix-contract.md) · [Issue #4 — INT-002](https://github.com/M0-coder/DESSET-Intelligence-Core/issues/4) · [Notion](https://app.notion.com/p/421eb559c05c81b0b4d7d4ac13253dda).
+
+El código contiene un ejemplo **sintético** en `examples/synthetic-osrm-table.json`. Ninguna capacidad logística nueva está operativa.

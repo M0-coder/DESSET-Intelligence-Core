@@ -21,7 +21,11 @@ jobs:
       - name: Syntax
         run: python -m compileall -q src tests
       - name: Install pinned coverage tooling
-        run: python -m pip install coverage==7.13.3
+        run: python -m pip install coverage==7.13.3 hypothesis==6.170.17 ruff==0.17.6
+      - name: Ruff static analysis
+        run: ruff check src tests
+      - name: Verify property-test dependencies
+        run: python -c "import hypothesis" && ruff --version
       - name: Unit tests and measured coverage
         run: |
           PYTHONPATH=src coverage run --source=src/desset_core -m unittest discover -s tests -v
