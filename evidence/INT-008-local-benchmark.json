@@ -1,0 +1,54 @@
+{
+  "algorithm": "fleet-exact-v0.1",
+  "data": "SYNTHETIC_ONLY",
+  "python": "3.13.5",
+  "results": [
+    {
+      "jobs": 1,
+      "vehicles": 3,
+      "served": 1,
+      "median_ms": 0.1,
+      "max_ms": 0.197
+    },
+    {
+      "jobs": 2,
+      "vehicles": 3,
+      "served": 2,
+      "median_ms": 0.296,
+      "max_ms": 0.372
+    },
+    {
+      "jobs": 3,
+      "vehicles": 3,
+      "served": 3,
+      "median_ms": 1.203,
+      "max_ms": 1.378
+    },
+    {
+      "jobs": 4,
+      "vehicles": 3,
+      "served": 4,
+      "median_ms": 3.431,
+      "max_ms": 4.728
+    },
+    {
+      "jobs": 5,
+      "vehicles": 3,
+      "served": 5,
+      "median_ms": 13.56,
+      "max_ms": 50.759
+    },
+    {
+      "jobs": 6,
+      "vehicles": 3,
+      "served": 6,
+      "median_ms": 52.691,
+      "max_ms": 54.355
+    }
+  ],
+  "limitations": [
+    "no real routes",
+    "microbenchmark",
+    "no performance guarantee"
+  ]
+}
