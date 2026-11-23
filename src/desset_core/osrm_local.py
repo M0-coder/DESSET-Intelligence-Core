@@ -10,8 +10,8 @@ import hashlib
 import http.client
 import json
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 from urllib.parse import urlsplit
 
 from .routing_matrix import MatrixInputError, PickupMatrix, parse_osrm_table

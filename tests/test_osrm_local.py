@@ -6,7 +6,14 @@ import unittest
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from desset_core import Courier, MatrixInputError, Order, RoadPoint, dispatch, fetch_local_osrm_table
+from desset_core import (
+    Courier,
+    MatrixInputError,
+    Order,
+    RoadPoint,
+    dispatch,
+    fetch_local_osrm_table,
+)
 
 
 @contextmanager
@@ -41,7 +48,6 @@ O = [RoadPoint("P1", -77.607, -11.112), RoadPoint("P2", -77.608, -11.113)]
 
 
 def response(c=C, o=O, durations=None):
-    points = list(c) + list(o)
     return {
         "code": "Ok", "durations": durations or [[5, 10], [8, 6]],
         "sources": [
@@ -86,48 +92,64 @@ class LocalOsrmTests(unittest.TestCase):
     def test_untrusted_snap_rejected_even_if_server_reports_zero(self):
         payload = response()
         payload["sources"][0]["location"] = [-77.5, -11.11]
-        with fake_server(payload) as (url, _):
-            with self.assertRaisesRegex(MatrixInputError, "snapped too far"):
-                query(url)
+        with (
+            fake_server(payload) as (url, _),
+            self.assertRaisesRegex(MatrixInputError, "snapped too far"),
+        ):
+            query(url)
 
     def test_excessive_reported_snap_rejected(self):
         payload = response()
         payload["destinations"][0]["distance"] = 500
-        with fake_server(payload) as (url, _):
-            with self.assertRaisesRegex(MatrixInputError, "snapped too far"):
-                query(url)
+        with (
+            fake_server(payload) as (url, _),
+            self.assertRaisesRegex(MatrixInputError, "snapped too far"),
+        ):
+            query(url)
 
     def test_missing_waypoint_binding_rejected(self):
         payload = response()
         payload.pop("sources")
-        with fake_server(payload) as (url, _):
-            with self.assertRaisesRegex(MatrixInputError, "cannot bind"):
-                query(url)
+        with (
+            fake_server(payload) as (url, _),
+            self.assertRaisesRegex(MatrixInputError, "cannot bind"),
+        ):
+            query(url)
 
     def test_wrong_waypoint_order_rejected(self):
         payload = response()
         payload["destinations"] = list(reversed(payload["destinations"]))
-        with fake_server(payload) as (url, _):
-            with self.assertRaisesRegex(MatrixInputError, "snapped too far"):
-                query(url)
+        with (
+            fake_server(payload) as (url, _),
+            self.assertRaisesRegex(MatrixInputError, "snapped too far"),
+        ):
+            query(url)
 
     def test_fallback_cells_rejected(self):
         payload = response()
         payload["fallback_speed_cells"] = [[0, 1]]
-        with fake_server(payload) as (url, _):
-            with self.assertRaisesRegex(MatrixInputError, "fallback"):
-                query(url)
+        with (
+            fake_server(payload) as (url, _),
+            self.assertRaisesRegex(MatrixInputError, "fallback"),
+        ):
+            query(url)
 
     def test_http_errors_are_fail_closed(self):
-        with fake_server({"code": "Error"}, status=503) as (url, _):
-            with self.assertRaisesRegex(MatrixInputError, "503"):
-                query(url)
-        with fake_server({}, status=302) as (url, _):
-            with self.assertRaisesRegex(MatrixInputError, "302"):
-                query(url)
-        with fake_server({}, encoding=b"<html>not JSON</html>") as (url, _):
-            with self.assertRaisesRegex(MatrixInputError, "valid JSON"):
-                query(url)
+        with (
+            fake_server({"code": "Error"}, status=503) as (url, _),
+            self.assertRaisesRegex(MatrixInputError, "503"),
+        ):
+            query(url)
+        with (
+            fake_server({}, status=302) as (url, _),
+            self.assertRaisesRegex(MatrixInputError, "302"),
+        ):
+            query(url)
+        with (
+            fake_server({}, encoding=b"<html>not JSON</html>") as (url, _),
+            self.assertRaisesRegex(MatrixInputError, "valid JSON"),
+        ):
+            query(url)
 
     def test_invalid_coordinates_or_duplicate_ids(self):
         for c in ([RoadPoint("A", 181, -11)], [RoadPoint("A", float("nan"), -11)],
@@ -176,9 +198,11 @@ class LocalOsrmTests(unittest.TestCase):
     def test_row_vs_column_permutation_is_rejected_when_waypoints_mismatch(self):
         payload = response()
         payload["sources"] = list(reversed(payload["sources"]))
-        with fake_server(payload) as (url, _):
-            with self.assertRaisesRegex(MatrixInputError, "snapped too far"):
-                query(url)
+        with (
+            fake_server(payload) as (url, _),
+            self.assertRaisesRegex(MatrixInputError, "snapped too far"),
+        ):
+            query(url)
 
 
 if __name__ == "__main__":

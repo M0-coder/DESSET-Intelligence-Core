@@ -14,13 +14,12 @@ __all__ = [
     "Courier",
     "DispatchResult",
     "LocalRoadMatrix",
-    "RoadPoint",
-    "fetch_local_osrm_table",
     "MatrixInputError",
     "MatrixProvenance",
     "Order",
     "PickupMatrix",
+    "RoadPoint",
     "dispatch",
+    "fetch_local_osrm_table",
     "parse_osrm_table",
 ]
-
