@@ -1,0 +1,57 @@
+{
+  "python_version": "3.13.5",
+  "machine": "x86_64",
+  "data_origin": "deterministic_synthetic_non_geographic",
+  "measurement": "wall_clock_local_perfcounter_not_SLA",
+  "baseline": "same_selection_logic_with_full_candidate_route_materialization",
+  "optimized": "same_selection_logic_with_lightweight_candidate_feasibility",
+  "not_measured": [
+    "real_peru_roads",
+    "traffic",
+    "ETA",
+    "SLA",
+    "production_load"
+  ],
+  "records": [
+    {
+      "vehicles": 4,
+      "jobs": 8,
+      "served_jobs": 8,
+      "cost_estimated_seconds": 48,
+      "optimized_median_ms": 2.284,
+      "baseline_median_ms": 9.948,
+      "baseline_to_optimized_speedup": 4.35,
+      "exact_plan_equivalence": true
+    },
+    {
+      "vehicles": 6,
+      "jobs": 16,
+      "served_jobs": 16,
+      "cost_estimated_seconds": 96,
+      "optimized_median_ms": 47.96,
+      "baseline_median_ms": 249.356,
+      "baseline_to_optimized_speedup": 5.2,
+      "exact_plan_equivalence": true
+    },
+    {
+      "vehicles": 8,
+      "jobs": 24,
+      "served_jobs": 24,
+      "cost_estimated_seconds": 226,
+      "optimized_median_ms": 264.352,
+      "baseline_median_ms": 1327.883,
+      "baseline_to_optimized_speedup": 5.02,
+      "exact_plan_equivalence": true
+    },
+    {
+      "vehicles": 10,
+      "jobs": 32,
+      "served_jobs": 32,
+      "cost_estimated_seconds": 274,
+      "optimized_median_ms": 523.129,
+      "baseline_median_ms": 2759.872,
+      "baseline_to_optimized_speedup": 5.28,
+      "exact_plan_equivalence": true
+    }
+  ]
+}

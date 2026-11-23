@@ -1,0 +1,59 @@
+{
+  "phase": "INT-009 preliminary local (not CI)",
+  "timestamp_utc": "2026-11-23",
+  "python_version": "3.13.5",
+  "test_discovery": "PYTHONPATH=src python -m unittest discover -s tests -q",
+  "discovered_tests": 104,
+  "passed_tests": 103,
+  "skipped_tests": 1,
+  "skipped_cause": "Hypothesis unavailable in local container; MUST be executed in GitHub CI",
+  "statement_coverage_total_percent": 95,
+  "statement_coverage_new_module_percent": 94,
+  "compileall": "PASS",
+  "mutation": {
+    "mutation": "replace capacity upper bound with only lower bound in _insertion_cost",
+    "observed_failures": 2,
+    "observed_errors": 0,
+    "restored": true,
+    "claim": "one localized adversarial check, not full mutation score"
+  },
+  "quality_counterexample": {
+    "vehicles": 2,
+    "jobs": 2,
+    "heuristic_served": 1,
+    "exact_served": 2,
+    "adaptive_served": 2,
+    "claim": "heuristic is not optimal; adaptive exact for small batches"
+  },
+  "performance": "see evidence/INT-009-local-benchmark.json",
+  "additional_samples": [
+    {
+      "vehicles": 12,
+      "jobs": 48,
+      "served": 48,
+      "wall_seconds": 1.6
+    },
+    {
+      "vehicles": 16,
+      "jobs": 64,
+      "served": 64,
+      "wall_seconds": 2.974
+    }
+  ],
+  "not_tested": [
+    "OSRM real with Peru PBF",
+    "live rider ETA",
+    "full mutation testing",
+    "instrumented end-to-end mobile app",
+    "production load",
+    "p95/p99 latency",
+    "security independent review",
+    "branch protection"
+  ],
+  "candidate_decision": "BLOCKED",
+  "candidate_decision_reason_codes": [
+    "missing_required_capability",
+    "required_control_not_verified",
+    "unmitigated_material_risk"
+  ]
+}

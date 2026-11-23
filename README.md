@@ -97,3 +97,9 @@ assert plan.total_estimated_travel_seconds == 240
 ```
 
 [Issue #15 · INT-008](https://github.com/M0-coder/DESSET-Intelligence-Core/issues/15) · [ADR-007](docs/ADR-007-fleet-exact-smallbatch.md) · [Benchmark sintético reproducible](benchmarks/bench_fleet.py). El alcance objetivo sigue siendo **todo el Perú**; los ejemplos son **100 % sintéticos**. Esta función no conecta por sí sola con OSRM real ni demuestra cobertura de la red peruana, fiabilidad de ETA o escalabilidad comercial. Para múltiples paradas reales se necesitan matrices dirigidas con origen cartográfico auditado y reglas específicas de DESSET y DESSET prime.
+
+## INT-009 — Inserción de rutas para flotas medianas (PR en revisión)
+
+`optimize_fleet_adaptive()` elige el optimizador **exacto** para lotes de hasta 4 vehículos/6 pedidos, y el nuevo `optimize_fleet_insertion()` para lotes mayores (límite experimental: 24 vehículos/80 pedidos, hasta 20 por vehículo). El segundo método es una **heurística**, sin garantía de máxima cobertura ni mínimo costo global, pero conserva restricciones duras de pickup→delivery, capacidad y arcos dirigidos. Las matrices pueden provenir de cualquier parte de Perú, pero **no se ha comprobado el servicio OSRM con cartografía nacional real**.
+
+[ADR-008](docs/ADR-008-adaptive-fleet-insertion.md) documenta un contraejemplo concreto donde el heurístico atiende 1 pedido y el exacto 2. No promocionar a producción solo por la velocidad de cálculo. Pruebas y benchmark: `PYTHONPATH=src python -m unittest discover -s tests -v` y `PYTHONPATH=src python benchmarks/bench_fleet_insertion.py`. El benchmark utiliza datos **sintéticos**, no demanda observada, ETA ni ganancias de DESSET.
