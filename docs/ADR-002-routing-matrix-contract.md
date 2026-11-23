@@ -15,6 +15,7 @@ El motor `dispatch.py` recibe tiempos de recogida estimados por pareja repartido
 - Restricciones de entrada: IDs distintos, etiquetas no vacías, forma de matriz exacta, números finitos no negativos, máximo **10 000 celdas** para este prototipo.
 - `dataset_ref` y `transport_profile` son metadatos **declarados por el llamador**; nunca se marcan como verificados automáticamente.
 - `response_sha256` identifica un JSON serializado de forma canónica; **no autentica** que los datos provengan de OSRM, ni su exactitud, ni su licencia.
+- **Endurecimiento adversarial INT-003 (en revisión):** las duraciones deben caber en entero técnico de 32 bits (0 a 2 147 483 647 segundos). Es un límite de interoperabilidad, **no** una duración aceptable para recogida. Se rechazan enteros arbitrariamente grandes y floats extremos con `MatrixInputError`, no `OverflowError`. Si OSRM incluye `sources` o `destinations`, se valida su longitud; **no se infiere que esos índices correspondan a los IDs enviados**. Cadenas Unicode mal formadas del JSON de respuesta también generan `MatrixInputError`.
 - No calcular márgenes, tiempos de entrega finales ni demanda a partir de este contrato. Las duraciones corresponden solo a `courier -> pickup` cuando las posiciones de origen y destino estén realmente definidas así.
 
 ## Fuentes y licencias para contrastar

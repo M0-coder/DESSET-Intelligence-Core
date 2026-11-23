@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 MAX_MATRIX_CELLS = 10_000
+# Technical interoperability limit, not an operational ETA/SLA.
+MAX_DURATION_SECONDS = 2_147_483_647
 
 
 class MatrixInputError(ValueError):
@@ -89,6 +91,13 @@ def parse_osrm_table(
     durations = response.get("durations")
     if not isinstance(durations, list) or len(durations) != len(sources):
         raise MatrixInputError("duration row count differs from courier count")
+    # These optional OSRM waypoint arrays cannot prove the external ID mapping,
+    # but a mismatched count must never be silently accepted.
+    for key, expected_size in (("sources", len(sources)), ("destinations", len(destinations))):
+        if key in response and (
+            not isinstance(response[key], list) or len(response[key]) != expected_size
+        ):
+            raise MatrixInputError(f"OSRM {key} count does not match supplied IDs")
 
     times: dict[tuple[str, str], int] = {}
     unreachable: list[tuple[str, str]] = []
@@ -100,8 +109,12 @@ def parse_osrm_table(
             if value is None:
                 unreachable.append(pair)
                 continue
-            if type(value) not in (float, int) or not math.isfinite(value) or value < 0:
-                raise MatrixInputError("durations must be finite nonnegative seconds or null")
+            if type(value) not in (float, int) or (
+                type(value) is float and not math.isfinite(value)
+            ) or value < 0 or value > MAX_DURATION_SECONDS:
+                raise MatrixInputError(
+                    "durations must be finite nonnegative seconds within supported range or null"
+                )
             times[pair] = math.ceil(value)
 
     try:
@@ -111,7 +124,7 @@ def parse_osrm_table(
                 allow_nan=False,
             ).encode("utf-8")
         ).hexdigest()
-    except (TypeError, ValueError) as exc:
+    except (TypeError, ValueError, UnicodeError, RecursionError) as exc:
         raise MatrixInputError("OSRM response must be valid JSON data") from exc
 
     return PickupMatrix(
