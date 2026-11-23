@@ -1,0 +1,31 @@
+{
+  "input_kind": "synthetic_deterministic",
+  "limitation": "no real network, OSRM, traffic, ETA, or production SLA",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "python": "3.13.5",
+  "runs_per_size": 10,
+  "samples": [
+    {
+      "jobs": 2,
+      "max_wall_ms": 0.093,
+      "median_wall_ms": 0.031,
+      "min_wall_ms": 0.028,
+      "total_estimated_travel_seconds": 2440
+    },
+    {
+      "jobs": 4,
+      "max_wall_ms": 0.752,
+      "median_wall_ms": 0.519,
+      "min_wall_ms": 0.349,
+      "total_estimated_travel_seconds": 3597
+    },
+    {
+      "jobs": 7,
+      "max_wall_ms": 90.728,
+      "median_wall_ms": 28.478,
+      "min_wall_ms": 27.16,
+      "total_estimated_travel_seconds": 5166
+    }
+  ],
+  "seed_base": 20261123
+}

@@ -52,3 +52,30 @@ El código contiene un ejemplo **sintético** en `examples/synthetic-osrm-table.
 - [Preprocesamiento OSRM MLD con PBF e imagen por digests obligatorios](scripts/build_peru_osrm.sh).
 
 [Issue INT-006](https://github.com/M0-coder/DESSET-Intelligence-Core/issues/11). **No se ha ejecutado OSRM real ni descargado el PBF de Perú.** Los casos y coordenadas son aproximados, no validados en el terreno. Una batería de consultas que resulte verde sigue declarando `nationwide_coverage_control_result=NOT_VERIFIED`. Ningún cambio activa una descarga, merge o despliegue automáticamente.
+
+## INT-007 — Algoritmo exacto multientrega (prototipo, PR en revisión)
+
+`desset_core.optimize_multistop(...)` calcula la **secuencia de recogidas y entregas**
+para un vehículo a partir de una matriz dirigida de segundos estimados. Respeta
+precedencia de recogida→entrega, capacidad a bordo, rutas inaccesibles y un
+presupuesto opcional de duración. Optimiza tiempo **de recorrido estimado**,
+no márgenes, tarifa, tráfico, ETA certificado ni equidad de repartidores.
+
+```python
+from desset_core import DeliveryJob, optimize_multistop
+
+jobs = [DeliveryJob("A", "A-PICKUP", "A-DELIVERY", 1)]
+legs = {("START", "A-PICKUP"): 120, ("A-PICKUP", "A-DELIVERY"): 300}
+plan = optimize_multistop("START", 1, jobs, legs)
+assert plan.total_estimated_travel_seconds == 420
+```
+
+**Límite deliberado:** hasta siete pedidos obligatorios por vehículo; nodos
+de recogida/entrega diferentes, sin ventanas horarias, tiempos de servicio,
+replanificación, selección de vehículos, turno, ruta de retorno ni optimización
+interprovincial a gran escala. Estas son etapas posteriores con otros modelos.
+No sustituye a `dispatch()` y **no demuestra calidad de ruta en Perú** sin
+OSRM verdadero y datos viales auditados. El origen de las matrices debe
+quedar trazado; los tests actuales usan tiempos sintéticos.
+
+[Decisión técnica ADR-006](docs/ADR-006-multistop-exact-routing.md) · [Notion](https://app.notion.com/p/421eb559c05c81b0b4d7d4ac13253dda).

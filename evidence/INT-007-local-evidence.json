@@ -1,0 +1,29 @@
+{
+  "record_kind": "local_experimental_evidence",
+  "work_context": "REPOSITORY",
+  "candidate": "INT-007 multistop exact small-batch route optimizer",
+  "local_toolchain": "Python 3.13.5 on Linux",
+  "test_command": "PYTHONPATH=src python -m unittest discover -s tests -q",
+  "tests_discovered": 83,
+  "local_tests_pass": 82,
+  "local_tests_skip": 1,
+  "skip_reason": "Hypothesis not installed locally; GitHub CI must independently run it",
+  "local_coverage_command": "PYTHONPATH=src coverage run --source=src/desset_core -m unittest discover -s tests -q && coverage report --fail-under=90 -m",
+  "local_statement_coverage_percent_rounded": 94,
+  "multistop_statement_coverage_percent_rounded": 100,
+  "syntax_compile": "PASS",
+  "independent_oracle": "135 synthetic generated scenarios up to 3 jobs using independent enumeration; verified optimal travel cost and infeasible cases",
+  "targeted_mutation": {
+    "mutation": "replace capacity guard with unconditional false in temporary working copy",
+    "mutated_test_exit_code": 1,
+    "mutated_test_failures": 38,
+    "restored_test_exit_code": 0,
+    "scope": "one mutant, not whole-program mutation testing"
+  },
+  "benchmark_file": "evidence/INT-007-local-benchmark.json",
+  "ci_result": "NOT_VERIFIED until GitHub workflow on exact candidate SHA completes",
+  "routing_on_real_peru_roads": "NOT_VERIFIED",
+  "production_candidate_decision": "BLOCKED",
+  "decision_reasons": ["missing_required_capability", "required_control_not_verified", "unmitigated_material_risk"],
+  "limitations": "Data synthetic, no OSRM daemon/PBF downloaded; one vehicle, all jobs mandatory; max seven jobs, no windows, no traffic, no fleet or business operations"
+}
