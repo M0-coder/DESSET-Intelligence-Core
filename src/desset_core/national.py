@@ -101,6 +101,8 @@ def parse_national_probes(value: object) -> tuple[NationalProbe, ...]:
             raise NationalProbeError("duplicate probe region")
         if kind == "urban" and len(regions) != 1:
             raise NationalProbeError("urban probe must reference one region")
+        if kind == "interprovincial" and len(regions) != 1:
+            raise NationalProbeError("interprovincial probe must stay within one region")
         if kind == "interregional" and len(regions) != 2:
             raise NationalProbeError("interregional probe must reference two regions")
         if item.get("coordinate_evidence") != "NOT_VERIFIED":

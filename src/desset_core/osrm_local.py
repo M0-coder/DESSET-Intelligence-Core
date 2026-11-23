@@ -100,7 +100,7 @@ def _waypoints(response: dict, name: str, expected: Sequence[RoadPoint], limit: 
     if not isinstance(values, list) or len(values) != len(expected):
         raise MatrixInputError(f"OSRM {name} missing or wrong length; cannot bind coordinates")
     distances = []
-    for value, point in zip(values, expected, strict=True):
+    for index, (value, point) in enumerate(zip(values, expected, strict=True)):
         if not isinstance(value, dict):
             raise MatrixInputError("OSRM waypoint must be an object")
         location = value.get("location")
@@ -112,6 +112,17 @@ def _waypoints(response: dict, name: str, expected: Sequence[RoadPoint], limit: 
         computed = _haversine_meters(point.longitude, point.latitude, lon, lat)
         if max(reported, computed) > limit:
             raise MatrixInputError("OSRM waypoint snapped too far from requested coordinate")
+        # Within snap tolerance, a returned waypoint could correspond to more
+        # than one submitted ID. The response carries no authenticated ID, so
+        # fail closed instead of silently binding an incorrect duration.
+        # Compare within the source/destination side only: square matrices
+        # intentionally repeat the same positions across both sides.
+        if any(
+            other_index != index
+            and _haversine_meters(other.longitude, other.latitude, lon, lat) <= limit
+            for other_index, other in enumerate(expected)
+        ):
+            raise MatrixInputError("OSRM waypoint identity ambiguous within snap tolerance")
         distances.append(computed)
     return distances
 

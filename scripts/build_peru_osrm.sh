@@ -27,23 +27,33 @@ ACTUAL="$(sha256sum "$PBF_REAL" | cut -d' ' -f1)"
 if [[ "$EXPECTED" != "$ACTUAL" ]]; then
   echo "PBF SHA-256 mismatch" >&2; exit 2
 fi
-# Prevent silent destructive overwrites and implicit image downloads.
+# Refuse any preexisting graph, even the bare .osrm file or a dangling symlink.
 shopt -s nullglob
-existing=("${PBF_REAL%.osm.pbf}.osrm."*)
-if (( ${#existing[@]} > 0 )); then
-  echo "existing OSRM graph files present: refusing overwrite" >&2; exit 2
-fi
+existing=("${PBF_REAL%.osm.pbf}.osrm" "${PBF_REAL%.osm.pbf}.osrm-build-manifest.json" "${PBF_REAL%.osm.pbf}.osrm."*)
+for entry in "${existing[@]}"; do
+  if [[ -e "$entry" || -L "$entry" ]]; then
+    echo "existing OSRM graph files present: refusing overwrite" >&2; exit 2
+  fi
+done
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   echo "pinned OSRM image not present locally (no automatic pull allowed)" >&2; exit 2
 fi
-# Docker run writes OSRM graph files alongside the original PBF.
-# Operators must review available memory/disk and Docker image provenance first.
-docker run --rm --pull never --network none --mount "type=bind,src=$DIRECTORY,dst=/data" "$IMAGE" \
+# Build only in a new private staging directory; source PBF remains untouched.
+# Keep partial staging directories on failure for review; no silent cleanup.
+# Explicitly budget disk/memory before use (PBF is copied; graph can be large).
+umask 077
+BUILD_DIR="$(mktemp -d "$DIRECTORY/${NAME%.osm.pbf}.osrm-build.XXXXXXXX")"
+cp -- "$PBF_REAL" "$BUILD_DIR/$NAME"
+COPIED_SHA="$(sha256sum "$BUILD_DIR/$NAME" | cut -d' ' -f1)"
+if [[ "$COPIED_SHA" != "$EXPECTED" ]]; then
+  echo "staged PBF SHA-256 mismatch: refusing build" >&2; exit 2
+fi
+docker run --rm --pull never --network none --mount "type=bind,src=$BUILD_DIR,dst=/data" "$IMAGE" \
   osrm-extract -p /opt/car.lua "/data/$NAME"
 BASE="/data/${NAME%.osm.pbf}.osrm"
-docker run --rm --pull never --network none --mount "type=bind,src=$DIRECTORY,dst=/data" "$IMAGE" osrm-partition "$BASE"
-docker run --rm --pull never --network none --mount "type=bind,src=$DIRECTORY,dst=/data" "$IMAGE" osrm-customize "$BASE"
-python3 - "$PBF_REAL" "$IMAGE" "$ACTUAL" <<'PYJSON'
+docker run --rm --pull never --network none --mount "type=bind,src=$BUILD_DIR,dst=/data" "$IMAGE" osrm-partition "$BASE"
+docker run --rm --pull never --network none --mount "type=bind,src=$BUILD_DIR,dst=/data" "$IMAGE" osrm-customize "$BASE"
+python3 - "$BUILD_DIR/$NAME" "$IMAGE" "$ACTUAL" <<'PYJSON'
 import datetime
 import hashlib
 import json
@@ -53,6 +63,8 @@ import sys
 pbf = pathlib.Path(sys.argv[1]); image = sys.argv[2]
 base = pbf.name.removesuffix(".osm.pbf")
 artifacts = sorted(pbf.parent.glob(f"{base}.osrm.*"))
+if (pbf.parent / f"{base}.osrm").is_file():
+    artifacts.insert(0, pbf.parent / f"{base}.osrm")
 if not artifacts:
     raise SystemExit("missing graph artifacts after preprocessing")
 rows = []
@@ -80,6 +92,6 @@ with out.open("x", encoding="utf-8") as stream:
     json.dump(manifest, stream, indent=2, ensure_ascii=False)
 print(f"Build manifest: {out}")
 PYJSON
-echo "MLD graph prepared for ${NAME}; no daemon was started."
+echo "MLD graph prepared in $BUILD_DIR; original PBF untouched. No daemon was started."
 echo "To serve locally ONLY (separate decision):"
-echo "docker run --rm -p 127.0.0.1:5000:5000 --mount type=bind,src=$DIRECTORY,dst=/data,readonly $IMAGE osrm-routed --algorithm mld $BASE"
+echo "docker run --rm -p 127.0.0.1:5000:5000 --mount type=bind,src=$BUILD_DIR,dst=/data,readonly $IMAGE osrm-routed --algorithm mld $BASE"
