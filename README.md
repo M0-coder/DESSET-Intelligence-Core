@@ -79,3 +79,21 @@ OSRM verdadero y datos viales auditados. El origen de las matrices debe
 quedar trazado; los tests actuales usan tiempos sintéticos.
 
 [Decisión técnica ADR-006](docs/ADR-006-multistop-exact-routing.md) · [Notion](https://app.notion.com/p/421eb559c05c81b0b4d7d4ac13253dda).
+
+## INT-008 — Optimización exacta de flota pequeña (prototipo experimental)
+
+`desset_core.optimize_fleet(...)` distribuye hasta **6 pedidos entre 4 vehículos** y genera para cada vehículo una ruta con recogida previa a entrega y capacidad a bordo válida. Maximiza pedidos servidos y después minimiza segundos estimados de recorrido; no inventa conexiones de carretera ausentes. Los pedidos que no puedan cubrirse se devuelven explícitamente.
+
+```python
+from desset_core import DeliveryJob, FleetVehicle, optimize_fleet
+
+vehicles = [FleetVehicle("R1", "START1", 2), FleetVehicle("R2", "START2", 1)]
+jobs = [DeliveryJob("J1", "PICKUP", "DROP", 1)]
+seconds = {("START1", "PICKUP"): 60, ("START2", "PICKUP"): 120,
+           ("PICKUP", "DROP"): 180}
+plan = optimize_fleet(vehicles, jobs, seconds)
+assert plan.served_job_count == 1
+assert plan.total_estimated_travel_seconds == 240
+```
+
+[Issue #15 · INT-008](https://github.com/M0-coder/DESSET-Intelligence-Core/issues/15) · [ADR-007](docs/ADR-007-fleet-exact-smallbatch.md) · [Benchmark sintético reproducible](benchmarks/bench_fleet.py). El alcance objetivo sigue siendo **todo el Perú**; los ejemplos son **100 % sintéticos**. Esta función no conecta por sí sola con OSRM real ni demuestra cobertura de la red peruana, fiabilidad de ETA o escalabilidad comercial. Para múltiples paradas reales se necesitan matrices dirigidas con origen cartográfico auditado y reglas específicas de DESSET y DESSET prime.

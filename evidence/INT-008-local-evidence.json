@@ -1,0 +1,49 @@
+{
+  "work_context": "REPOSITORY",
+  "project": "DESSET Intelligence Core",
+  "issue_url": "https://github.com/M0-coder/DESSET-Intelligence-Core/issues/15",
+  "baseline_pr_url": "https://github.com/M0-coder/DESSET-Intelligence-Core/pull/14",
+  "baseline_commit": "6529f9075bc0abd8c4f74a8aafe6a074ab2272c0",
+  "scope": "small fleet offline exact optimizer",
+  "local_python": "3.13.5",
+  "local_tests": {
+    "discovered": 93,
+    "passed": 92,
+    "skipped": 1,
+    "skip_reason": "Hypothesis unavailable locally"
+  },
+  "coverage_statement_percent": 95,
+  "fleet_module_statement_coverage_percent": 97,
+  "compileall": "PASS",
+  "ruff_local": "NOT_VERIFIED (not installed)",
+  "hypothesis_local": "NOT_VERIFIED (not installed)",
+  "mutation_test": {
+    "type": "localized adversarial mutant",
+    "transformation": "reverse max-served priority in fleet objective",
+    "mutant_result": "FAILED: 41 failures, 2 errors in fleet test suite",
+    "candidate_modified": false
+  },
+  "road_network_real_peru": "NOT_VERIFIED",
+  "osrm_actual": "NOT_VERIFIED",
+  "network_blocker": "Geofabrik DNS unavailable; Docker/OSRM unavailable in this container",
+  "benchmark_file": "evidence/INT-008-local-benchmark.json",
+  "candidate_decision_for_production": "BLOCKED",
+  "reason_codes": [
+    "missing_required_capability",
+    "required_control_not_verified",
+    "unmitigated_material_risk"
+  ],
+  "claims": [
+    "all job assignments have disjoint vehicles",
+    "capacity and pickup before delivery for each vehicle",
+    "lexicographic maximize served then minimize supplied travel seconds",
+    "reproducible small-batch decisions"
+  ],
+  "limitations": [
+    "max 4 vehicles 6 jobs",
+    "no commercial-scale latency claims",
+    "no data observed",
+    "no real Peru travel times",
+    "no CI result until GitHub run"
+  ]
+}

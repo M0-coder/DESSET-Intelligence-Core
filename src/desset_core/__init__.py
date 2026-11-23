@@ -1,6 +1,7 @@
 """Experimental algorithms for DESSET; no operational integrations."""
 
 from .dispatch import Assignment, Courier, DispatchResult, Order, dispatch
+from .fleet import FleetPlan, FleetVehicle, VehicleAssignment, optimize_fleet
 from .multistop import (
     DeliveryJob,
     MultiStopPlan,
@@ -22,6 +23,8 @@ __all__ = [
     "Courier",
     "DeliveryJob",
     "DispatchResult",
+    "FleetPlan",
+    "FleetVehicle",
     "LocalRoadMatrix",
     "MatrixInputError",
     "MatrixProvenance",
@@ -32,8 +35,10 @@ __all__ = [
     "RoadPoint",
     "RouteInputError",
     "RouteVisit",
+    "VehicleAssignment",
     "dispatch",
     "fetch_local_osrm_table",
+    "optimize_fleet",
     "optimize_multistop",
     "parse_osrm_table",
 ]
