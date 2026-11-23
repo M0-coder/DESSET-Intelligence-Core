@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from functools import lru_cache
+from functools import cache
 
 from .routing_matrix import MAX_DURATION_SECONDS
 
@@ -126,7 +126,7 @@ def optimize_multistop(
     pickup_nodes = tuple(job.pickup_node for job in ordered)
     delivery_nodes = tuple(job.delivery_node for job in ordered)
 
-    @lru_cache(maxsize=None)
+    @cache
     def solve(picked: int, delivered: int, at: str) -> tuple[int, tuple[tuple[int, int], ...]] | None:
         if delivered == done_mask:
             return (0, ())
