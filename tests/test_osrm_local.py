@@ -8,11 +8,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from desset_core import (
     Courier,
+    DeliveryJob,
     MatrixInputError,
     Order,
     RoadPoint,
     dispatch,
     fetch_local_osrm_table,
+    optimize_multistop,
 )
 
 
@@ -67,6 +69,28 @@ def query(url, c=C, o=O, **kwargs):
 
 
 class LocalOsrmTests(unittest.TestCase):
+    def test_square_osrm_table_feeds_multistop_exact_solver(self):
+        # HTTP mock only: this is not a genuine OSRM road network.
+        points = [RoadPoint("S", -77.605, -11.110),
+                  RoadPoint("AP", -77.606, -11.111),
+                  RoadPoint("AD", -77.607, -11.112)]
+        fake = response(c=points, o=points, durations=[
+            [0, 8, None], [40, 0, 12], [5, 10, 0],
+        ])
+        with fake_server(fake) as (url, requests):
+            matrix = fetch_local_osrm_table(
+                points, points, dataset_ref="SYNTHETIC", transport_profile="test",
+                base_url=url,
+            )
+        plan = optimize_multistop(
+            "S", 1, [DeliveryJob("job", "AP", "AD", 1)],
+            matrix.matrix.pickup_seconds,
+        )
+        self.assertEqual(plan.total_estimated_travel_seconds, 20)
+        self.assertEqual([stop.action for stop in plan.visits], ["pickup", "delivery"])
+        self.assertEqual(matrix.matrix.provenance.dataset_verified, False)
+        self.assertIn("sources=0;1;2&destinations=3;4;5", requests[0])
+
     def test_full_http_contract_dispatch_and_source_indices(self):
         with fake_server(response()) as (url, requests):
             result = query(url)
