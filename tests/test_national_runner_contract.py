@@ -67,7 +67,7 @@ class NationalRunnerContractTests(unittest.TestCase):
                 "--profile", "SYNTHETIC",
                 "--base-url", url, "--output", str(out),
             ]
-            result = subprocess.run(command, capture_output=True, text=True, env=env)
+            result = subprocess.run(command, check=False, capture_output=True, text=True, env=env)
             self.assertEqual(result.returncode, 0, result.stderr)
             report = json.loads(out.read_text(encoding="utf-8"))
             self.assertEqual(report["counts"]["queries_pass"], 10)
@@ -88,7 +88,7 @@ class NationalRunnerContractTests(unittest.TestCase):
         self.assertNotIn("docker push", source)
 
     def test_build_with_no_parameters_fails_before_docker(self):
-        done = subprocess.run(["bash", str(BUILD)], capture_output=True, text=True)
+        done = subprocess.run(["bash", str(BUILD)], check=False, capture_output=True, text=True)
         self.assertEqual(done.returncode, 2)
         self.assertIn("usage:", done.stderr)
 
