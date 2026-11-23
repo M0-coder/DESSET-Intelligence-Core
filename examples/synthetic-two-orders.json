@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "dataset_kind": "synthetic_demonstration_not_real_operations",
+  "couriers": [
+    {"id": "C1", "capacity_units": 1, "available": true},
+    {"id": "C2", "capacity_units": 1, "available": true}
+  ],
+  "orders": [
+    {"id": "O1", "load_units": 1, "max_pickup_seconds": 200},
+    {"id": "O2", "load_units": 1, "max_pickup_seconds": 200}
+  ],
+  "pickup_seconds": [
+    {"courier_id": "C1", "order_id": "O1", "seconds": 1},
+    {"courier_id": "C2", "order_id": "O1", "seconds": 2},
+    {"courier_id": "C1", "order_id": "O2", "seconds": 2},
+    {"courier_id": "C2", "order_id": "O2", "seconds": 100}
+  ]
+}

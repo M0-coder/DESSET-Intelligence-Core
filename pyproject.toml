@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=70,<81"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "desset-intelligence-core"
+version = "0.1.0"
+description = "Offline deterministic dispatch prototype for DESSET"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]

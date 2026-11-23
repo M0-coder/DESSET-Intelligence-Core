@@ -1,20 +1,35 @@
 # DESSET Intelligence Core
 
-Repositorio independiente de algoritmos verificables para el ecosistema DESSET.
+**Estado:** código de prototipo offline, no operable en producción. Repositorio público. **No contiene datos observados ni algoritmos validados sobre rutas reales de Huacho.**
 
-- **DESSET:** comercio y delivery inmediato.
-- **DESSET prime:** paquetería, transporte, fulfillment y, a largo plazo, logística internacional y portuaria.
+## Identidad y ámbito
 
-Estado inicial: **sin motor operativo, sin datos de producción y sin despliegues**. Este repositorio es público: no subir secretos, datos personales ni información comercial sensible.
+- **DESSET:** plataforma de comercio y entrega inmediata; primera prueba: asignación a repartidores.
+- **DESSET prime:** paquetería, fulfillment y red logística; más adelante importaciones y operaciones marítimas/portuarias. Su modelo de decisión requiere reglas y contratos propios, **no** debe reutilizar el despacho urbano sin revisión.
+- **Intelligence Core:** biblioteca de algoritmos, reglas y pruebas; no tiene usuarios finales, transacciones, pagos ni despliegues.
 
-## Gobierno y fuentes de verdad
+**Documentación canónica:** [Notion — DESSET Intelligence Core](https://app.notion.com/p/421eb559c05c81b0b4d7d4ac13253dda). **Trabajo:** [INT-001](https://github.com/M0-coder/DESSET-Intelligence-Core/issues/2) · [ADR-001](docs/ADR-001-dispatch-scope.md).
 
-- [Expediente técnico independiente en Notion](https://app.notion.com/p/421eb559c05c81b0b4d7d4ac13253dda).
-- [INT-000: gobierno y alcance](https://github.com/M0-coder/DESSET-Intelligence-Core/issues/1).
-- [INT-001: auditoría de datos y contrato de despacho](https://github.com/M0-coder/DESSET-Intelligence-Core/issues/2).
+## Ejecutar el prototipo (Python 3.12+)
 
-El código, sus pruebas y versiones se gobiernan por GitHub; Notion documenta decisiones y evidencia referenciadas por SHA. Ninguna herramienta sincroniza automáticamente ambos espacios.
+Sin librerías externas durante la ejecución:
 
-## Seguridad del cambio
+```bash
+PYTHONPATH=src python -m desset_core --input examples/synthetic-two-orders.json --strategy optimal
+PYTHONPATH=src python -m desset_core --input examples/synthetic-two-orders.json --strategy greedy
+PYTHONPATH=src python -m unittest discover -s tests -v
+```
 
-No auto-merge, no releases, no publicación, no consumo de datos reales sin tratamiento autorizado. Todo motor nuevo se propone en una rama y PR de revisión. La integración exige pruebas y aprobación explícita.
+**Todos los pedidos, repartidores y tiempos del ejemplo son sintéticos.** El motor no calcula rutas ni tráfico. Recibe una matriz de tiempos estimados cuyo origen, precisión y legalidad se deberán comprobar aparte. La comparación `optimal` frente a `greedy` **no acredita superioridad comercial ni operativa**.
+
+## Límite del primer algoritmo
+
+Una ola; máximo un pedido por repartidor; capacidad y disponibilidad duras; posible límite de espera de recogida; combinación de máximo número de asignaciones y mínimo total de segundos estimados. Resultado auditado por IDs y motivos de no asignación. No es un sistema de replanificación dinámica ni despacho de varios paquetes por vehículo.
+
+## Ingeniería obligatoria
+
+Primero fijar el alcance: arquitectura, compilación, pruebas unitarias e instrumentadas si aplican, cobertura, análisis estático, calidad de CI, seguridad, reproducibilidad, mutation testing, deuda técnica y evidencia de ejecución. Esos gates **no se presumen aprobados** por existir código. Ver ADR-001 para lo pendiente.
+
+## Cambio controlado
+
+Nada de auto-merge, producción, DNS, releases ni publicación. No introducir secretos, PII, datos de clientes o parámetros comerciales protegidos. Cada PR deberá referenciar decisiones de Notion, issues y commit SHA, e indicar evidencia PASS/FAIL/PENDIENTE. No existe sincronización automática de decisiones entre GitHub y Notion.
