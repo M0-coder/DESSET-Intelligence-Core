@@ -9,7 +9,8 @@ import unittest
 from desset_core.dispatch import Courier, Order, dispatch
 
 try:
-    from hypothesis import given, settings, strategies as st
+    from hypothesis import given, settings
+    from hypothesis import strategies as st
 except ImportError:
     class RequiresHypothesis(unittest.TestCase):
         @unittest.skip("Hypothesis not installed; required in CI")

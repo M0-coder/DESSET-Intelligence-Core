@@ -9,9 +9,9 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Mapping, Sequence
 
 MAX_MATRIX_CELLS = 10_000
 

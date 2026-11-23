@@ -6,8 +6,8 @@ Each courier can receive at most one order per dispatch call. No external I/O.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Mapping, Sequence
 
 ALGORITHM_VERSION = "dispatch-mincost-v0.1"
 
