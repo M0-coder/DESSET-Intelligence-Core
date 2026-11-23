@@ -41,9 +41,9 @@ def independent_route(start, capacity, jobs, times, limit=None):
             cost += leg
             at = node
         else:
-            if len(delivered) == len(jobs) and (limit is None or cost <= limit):
-                if best is None or cost < best:
-                    best = cost
+            if (len(delivered) == len(jobs) and (limit is None or cost <= limit)
+                    and (best is None or cost < best)):
+                best = cost
     return best
 
 
