@@ -4,9 +4,9 @@ This guard is source-level. It is NOT an independent protected verifier and
 must not be used to claim full supply-chain assurance or branch protection.
 """
 
-from pathlib import Path
 import re
 import unittest
+from pathlib import Path
 
 WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/ci.yml"
 FULL_SHA = re.compile(r"^(actions/(?:checkout|setup-python))@([0-9a-f]{40})$")
