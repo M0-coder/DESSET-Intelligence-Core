@@ -4,14 +4,14 @@ import hashlib
 import json
 import os
 import subprocess
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 
+from test_osrm_local import fake_server, response
+
 from desset_core import MatrixInputError, RoadPoint, fetch_local_osrm_table
 from desset_core.national import NationalProbeError, parse_national_probes
-from test_osrm_local import fake_server, response
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD_SCRIPT = ROOT / "scripts" / "build_peru_osrm.sh"
