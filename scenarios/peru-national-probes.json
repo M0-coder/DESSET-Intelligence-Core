@@ -1,0 +1,73 @@
+{
+  "country_code": "PE",
+  "coordinate_accuracy": "APPROXIMATE_UNVERIFIED",
+  "jurisdictions": [
+    "Amazonas", "Áncash", "Apurímac", "Arequipa", "Ayacucho", "Cajamarca",
+    "Callao", "Cusco", "Huancavelica", "Huánuco", "Ica", "Junín",
+    "La Libertad", "Lambayeque", "Lima", "Loreto", "Madre de Dios",
+    "Moquegua", "Pasco", "Piura", "Puno", "San Martín", "Tacna",
+    "Tumbes", "Ucayali"
+  ],
+  "probes": [
+    {
+      "id": "PE-LIMA-URBAN-01", "kind": "urban", "regions": ["Lima"],
+      "coordinate_evidence": "NOT_VERIFIED",
+      "origin": {"id": "lima-urban-a", "longitude": -77.043, "latitude": -12.046},
+      "destination": {"id": "lima-urban-b", "longitude": -77.04, "latitude": -12.047}
+    },
+    {
+      "id": "PE-TRUJILLO-URBAN-01", "kind": "urban", "regions": ["La Libertad"],
+      "coordinate_evidence": "NOT_VERIFIED",
+      "origin": {"id": "trujillo-a", "longitude": -79.030, "latitude": -8.112},
+      "destination": {"id": "trujillo-b", "longitude": -79.027, "latitude": -8.110}
+    },
+    {
+      "id": "PE-AREQUIPA-URBAN-01", "kind": "urban", "regions": ["Arequipa"],
+      "coordinate_evidence": "NOT_VERIFIED",
+      "origin": {"id": "arequipa-a", "longitude": -71.539, "latitude": -16.399},
+      "destination": {"id": "arequipa-b", "longitude": -71.536, "latitude": -16.397}
+    },
+    {
+      "id": "PE-CUSCO-URBAN-01", "kind": "urban", "regions": ["Cusco"],
+      "coordinate_evidence": "NOT_VERIFIED",
+      "origin": {"id": "cusco-a", "longitude": -71.978, "latitude": -13.519},
+      "destination": {"id": "cusco-b", "longitude": -71.974, "latitude": -13.521}
+    },
+    {
+      "id": "PE-PIURA-URBAN-01", "kind": "urban", "regions": ["Piura"],
+      "coordinate_evidence": "NOT_VERIFIED",
+      "origin": {"id": "piura-a", "longitude": -80.631, "latitude": -5.194},
+      "destination": {"id": "piura-b", "longitude": -80.628, "latitude": -5.192}
+    },
+    {
+      "id": "PE-IQUITOS-URBAN-01", "kind": "urban", "regions": ["Loreto"],
+      "coordinate_evidence": "NOT_VERIFIED",
+      "origin": {"id": "iquitos-a", "longitude": -73.251, "latitude": -3.75},
+      "destination": {"id": "iquitos-b", "longitude": -73.249, "latitude": -3.748}
+    },
+    {
+      "id": "PE-LIMA-HUACHO-INTERPROVINCIAL-01", "kind": "interprovincial", "regions": ["Lima"],
+      "coordinate_evidence": "NOT_VERIFIED",
+      "origin": {"id": "lima-inter-a", "longitude": -77.043, "latitude": -12.046},
+      "destination": {"id": "huacho-inter-b", "longitude": -77.606, "latitude": -11.112}
+    },
+    {
+      "id": "PE-TRUJILLO-CHICLAYO-INTERREGIONAL-01", "kind": "interregional", "regions": ["La Libertad", "Lambayeque"],
+      "coordinate_evidence": "NOT_VERIFIED",
+      "origin": {"id": "trujillo-inter-a", "longitude": -79.03, "latitude": -8.11},
+      "destination": {"id": "chiclayo-inter-b", "longitude": -79.84, "latitude": -6.77}
+    },
+    {
+      "id": "PE-AREQUIPA-TACNA-INTERREGIONAL-01", "kind": "interregional", "regions": ["Arequipa", "Tacna"],
+      "coordinate_evidence": "NOT_VERIFIED",
+      "origin": {"id": "arequipa-inter-a", "longitude": -71.537, "latitude": -16.399},
+      "destination": {"id": "tacna-inter-b", "longitude": -70.25, "latitude": -18.012}
+    },
+    {
+      "id": "PE-IQUITOS-PUCALLPA-INTERREGIONAL-01", "kind": "interregional", "regions": ["Loreto", "Ucayali"],
+      "coordinate_evidence": "NOT_VERIFIED",
+      "origin": {"id": "iquitos-inter-a", "longitude": -73.251, "latitude": -3.75},
+      "destination": {"id": "pucallpa-inter-b", "longitude": -74.561, "latitude": -8.381}
+    }
+  ]
+}
