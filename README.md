@@ -1,6 +1,6 @@
 # DESSET Intelligence Core
 
-**Estado:** código de prototipo offline, no operable en producción. Repositorio público. **No contiene datos observados ni algoritmos validados sobre rutas reales de Huacho.**
+**Estado:** código de prototipo offline, no operable en producción. Repositorio público. **No contiene datos observados ni algoritmos validados sobre rutas reales del Perú.**
 
 ## Identidad y ámbito
 
@@ -41,3 +41,14 @@ Nada de auto-merge, producción, DNS, releases ni publicación. No introducir se
 [ADR-002](docs/ADR-002-routing-matrix-contract.md) · [Issue #4 — INT-002](https://github.com/M0-coder/DESSET-Intelligence-Core/issues/4) · [Notion](https://app.notion.com/p/421eb559c05c81b0b4d7d4ac13253dda).
 
 El código contiene un ejemplo **sintético** en `examples/synthetic-osrm-table.json`. Ninguna capacidad logística nueva está operativa.
+
+## INT-006: validación territorial nacional (propuesta experimental)
+
+**Objetivo definitivo de cobertura: TODO EL PERÚ.** Huacho es una zona piloto posible, no la frontera del motor. DESSET urbano y DESSET prime interprovincial necesitan restricciones y métricas propias.
+
+- [ADR-005 — protocolo de validación nacional](docs/ADR-005-national-peru-routing-validation.md).
+- [Inventario de 25 jurisdicciones y 10 probes ILUSTRATIVOS](scenarios/peru-national-probes.json).
+- [Verificador de SHA-256 y consulta opt-in a OSRM local](scripts/probe_peru_osrm.py).
+- [Preprocesamiento OSRM MLD con PBF e imagen por digests obligatorios](scripts/build_peru_osrm.sh).
+
+[Issue INT-006](https://github.com/M0-coder/DESSET-Intelligence-Core/issues/11). **No se ha ejecutado OSRM real ni descargado el PBF de Perú.** Los casos y coordenadas son aproximados, no validados en el terreno. Una batería de consultas que resulte verde sigue declarando `nationwide_coverage_control_result=NOT_VERIFIED`. Ningún cambio activa una descarga, merge o despliegue automáticamente.
