@@ -102,7 +102,7 @@ def verify_staged_peru_graph(
                     if p.name == f"{base}.osrm" or p.name.startswith(f"{base}.osrm.")}
     if actual_names != expected_names:
         raise NationalProbeError("OSRM graph inventory differs from staged files")
-    if set(p.name for p in graph_dir.iterdir()) != expected_names | {pbf.name, manifest_path.name}:
+    if {p.name for p in graph_dir.iterdir()} != expected_names | {pbf.name, manifest_path.name}:
         raise NationalProbeError("unexpected files in private graph staging directory")
     return {
         "graph_artifact_integrity_control_result": "PASS",

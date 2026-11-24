@@ -3,8 +3,8 @@
 import hashlib
 import json
 import subprocess
-import threading
 import sys
+import threading
 import tempfile
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
