@@ -17,6 +17,21 @@ from .national import HASH, NationalProbeError, verify_local_pbf
 IMAGE_REFERENCE = re.compile(r"^ghcr\.io/project-osrm/osrm-backend@sha256:[0-9a-f]{64}$")
 
 
+# OSRM v6.0.0, default MLD/car profile; storage_config.hpp and storage.cpp.
+# This minimum structural gate is not binary parsing or a daemon-readiness test.
+REQUIRED_MLD_SUFFIXES = frozenset({
+    ".osrm.datasource_names", ".osrm.ebg_nodes", ".osrm.edges", ".osrm.fileIndex",
+    ".osrm.geometry", ".osrm.icd", ".osrm.maneuver_overrides", ".osrm.names",
+    ".osrm.nbg_nodes", ".osrm.properties", ".osrm.ramIndex", ".osrm.timestamp",
+    ".osrm.tld", ".osrm.tls", ".osrm.turn_duration_penalties", ".osrm.turn_weight_penalties",
+    ".osrm.cells", ".osrm.cell_metrics", ".osrm.mldgr", ".osrm.partition",
+})
+NONEMPTY_MLD_SUFFIXES = frozenset({
+    ".osrm.fileIndex", ".osrm.ramIndex", ".osrm.properties", ".osrm.cells",
+    ".osrm.cell_metrics", ".osrm.mldgr", ".osrm.partition",
+})
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as source:
@@ -33,7 +48,7 @@ def _regular(path: Path, label: str) -> None:
 def verify_staged_peru_graph(
     graph_dir: Path, *, expected_pbf_sha256: str, expected_image_reference: str,
 ) -> dict[str, object]:
-    """Verify an isolated, complete graph staging directory from build_peru_osrm.sh.
+    """Verify the inventory and minimum MLD file set of a staging directory from build_peru_osrm.sh.
 
     PASS means file byte equality against operator-supplied digests only. It does
     not prove the PBF came from Geofabrik, the OSRM image is trustworthy, or the
@@ -79,6 +94,7 @@ def verify_staged_peru_graph(
     if not isinstance(artifacts, list) or not artifacts or len(artifacts) > 500:
         raise NationalProbeError("OSRM graph artifact inventory missing or oversized")
     expected_names: set[str] = set()
+    nonempty_names = {base + suffix for suffix in NONEMPTY_MLD_SUFFIXES}
     verified_bytes = 0
     for entry in artifacts:
         if not isinstance(entry, dict) or set(entry) != {"name", "bytes", "sha256"}:
@@ -90,14 +106,19 @@ def verify_staged_peru_graph(
             raise NationalProbeError("invalid, duplicated or foreign graph artifact name")
         if type(length) is not int or length < 0 or not isinstance(digest, str) or not HASH.fullmatch(digest):
             raise NationalProbeError("invalid graph artifact length/hash")
+        if name in nonempty_names and length == 0:
+            raise NationalProbeError("required MLD artifact is empty")
         expected_names.add(name)
         artifact = graph_dir / name
         _regular(artifact, "graph artifact")
         if artifact.stat().st_size != length or _sha256(artifact) != digest:
             raise NationalProbeError("graph artifact tampered or truncated")
         verified_bytes += length
-    # Inventory must cover every graph by-product, even files not listed by a
-    # malicious or stale manifest. Partial graphs are not silently accepted.
+    # Inventory equality alone cannot establish the minimum required files.
+    required_names = {base + suffix for suffix in REQUIRED_MLD_SUFFIXES}
+    if not required_names.issubset(expected_names):
+        raise NationalProbeError("required OSRM v6 MLD artifacts missing")
+    # Inventory must also cover every actual graph by-product.
     actual_names = {p.name for p in graph_dir.iterdir()
                     if p.name == f"{base}.osrm" or p.name.startswith(f"{base}.osrm.")}
     if actual_names != expected_names:
@@ -106,6 +127,8 @@ def verify_staged_peru_graph(
         raise NationalProbeError("unexpected files in private graph staging directory")
     return {
         "graph_artifact_integrity_control_result": "PASS",
+        "graph_minimum_inventory_control_result": "PASS",
+        "graph_readiness_control_result": "NOT_VERIFIED",
         "pbf_sha256": pbf_info["sha256"],
         "pbf_filename": pbf.name,
         "image_reference_declared": expected_image_reference,
