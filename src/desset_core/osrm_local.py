@@ -20,6 +20,10 @@ MAX_POINTS = 100  # OSRM's usual default table location limit; not a performance
 MAX_RESPONSE_BYTES = 2_000_000
 
 
+class OsrmUnavailableError(MatrixInputError):
+    """Connection failure, timeout, or upstream HTTP availability failure."""
+
+
 @dataclass(frozen=True)
 class RoadPoint:
     id: str
@@ -179,13 +183,17 @@ def fetch_local_osrm_table(
     try:
         connection.request("GET", request_path, headers={"Accept": "application/json"})
         response = connection.getresponse()
+        if response.status >= 500 or response.status in (408, 429):
+            raise OsrmUnavailableError(f"local OSRM HTTP returned {response.status}")
         if response.status != 200:
             raise MatrixInputError(f"local OSRM HTTP returned {response.status}")
         raw = response.read(MAX_RESPONSE_BYTES + 1)
         if len(raw) > MAX_RESPONSE_BYTES:
             raise MatrixInputError("OSRM response too large")
-    except (OSError, TimeoutError, http.client.HTTPException) as exc:
-        raise MatrixInputError("local OSRM unavailable or malformed HTTP response") from exc
+    except (OSError, TimeoutError) as exc:
+        raise OsrmUnavailableError("local OSRM unavailable or timed out") from exc
+    except http.client.HTTPException as exc:
+        raise MatrixInputError("malformed HTTP response from local OSRM") from exc
     finally:
         connection.close()
     try:

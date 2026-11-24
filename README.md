@@ -129,3 +129,7 @@ PYTHONPATH=src python scripts/probe_peru_osrm.py \
 ```
 
 `--graph-dir` debe contener PBF fechado, inventario creado por `build_peru_osrm.sh` y archivos de grafo con hashes válidos. El comando falla cerrado ante discrepancias y **nunca** demuestra que el daemon use ese grafo: el informe declara `daemon_graph_binding_control_result=NOT_VERIFIED`, `nationwide_coverage_control_result=NOT_VERIFIED`, `candidate_decision=BLOCKED`. Las pruebas de CI usan archivos/servidor **simulados**; OSRM auténtico y cartografía vial efectiva requieren otro control en la infraestructura autorizada. [ADR-011](docs/ADR-011-peru-graph-evidence-gate.md).
+
+### INT-012.1 — Hardening AUD-002
+
+El CLI nacional protege los insumos mediante publicación exclusiva, verifica el mínimo de artefactos MLD v6 y distingue resultados viales de fallos de infraestructura. Véase [ADR-012](docs/ADR-012-aud002-integrity-hardening.md). El arranque y las consultas reales de OSRM continúan sin verificar.

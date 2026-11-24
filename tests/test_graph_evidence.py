@@ -10,7 +10,7 @@ import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from desset_core.graph_evidence import verify_staged_peru_graph
+from desset_core.graph_evidence import REQUIRED_MLD_SUFFIXES, verify_staged_peru_graph
 from desset_core.national import NationalProbeError
 
 IMAGE = "ghcr.io/project-osrm/osrm-backend@sha256:" + "a" * 64
@@ -30,9 +30,12 @@ def make_staging(root):
     b = data / f"{BASE}.osrm.nodes"
     a.write_bytes(b"not-an-osrm-graph")
     b.write_bytes(b"not-osrm-nodes")
+    required = [data / f"{BASE}{suffix}" for suffix in sorted(REQUIRED_MLD_SUFFIXES)]
+    for path in required:
+        path.write_bytes(b"synthetic required artifact, not a real graph")
     artifacts = [{"name": item.name, "bytes": item.stat().st_size,
                   "sha256": hashlib.sha256(item.read_bytes()).hexdigest()}
-                 for item in (a, b)]
+                 for item in (a, b, *required)]
     manifest = {
         "country_code": "PE", "pbf_name": NAME, "pbf_sha256": digest,
         "image_reference": IMAGE, "osrm_algorithm": "MLD",
@@ -52,7 +55,7 @@ class GraphEvidenceTests(unittest.TestCase):
                 directory, expected_pbf_sha256=digest, expected_image_reference=IMAGE,
             )
             self.assertEqual(result["graph_artifact_integrity_control_result"], "PASS")
-            self.assertEqual(result["artifact_count"], 2)
+            self.assertEqual(result["artifact_count"], 2 + len(REQUIRED_MLD_SUFFIXES))
             self.assertEqual(result["daemon_graph_binding_control_result"], "NOT_VERIFIED")
             self.assertEqual(result["dataset_source_authenticity_control_result"], "NOT_VERIFIED")
             self.assertEqual(result["candidate_decision"], "BLOCKED")
@@ -69,7 +72,7 @@ class GraphEvidenceTests(unittest.TestCase):
     def test_uninventoried_graph_file_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             directory, digest, _ = make_staging(Path(tmp))
-            (directory / f"{BASE}.osrm.partition").write_bytes(b"unlisted")
+            (directory / f"{BASE}.osrm.unlisted").write_bytes(b"unlisted")
             with self.assertRaisesRegex(NationalProbeError, "inventory differs"):
                 verify_staged_peru_graph(
                     directory, expected_pbf_sha256=digest, expected_image_reference=IMAGE,

@@ -12,7 +12,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from .osrm_local import RoadPoint, fetch_local_osrm_table
+from .osrm_local import OsrmUnavailableError, RoadPoint, fetch_local_osrm_table
 from .routing_matrix import MatrixInputError
 
 # 24 departments plus the Constitutional Province of Callao. This is a coverage
@@ -40,6 +40,7 @@ class NationalProbe:
     origin: RoadPoint
     destination: RoadPoint
     coordinate_evidence: str
+    expected_outcome: str = "ROUTE"
 
 
 @dataclass(frozen=True)
@@ -52,6 +53,8 @@ class NationalProbeResult:
     reason: str | None
     request_sha256: str | None
     response_sha256: str | None
+    route_outcome: str
+    expected_outcome: str
 
 
 def _location(value: object, label: str) -> RoadPoint:
@@ -107,6 +110,9 @@ def parse_national_probes(value: object) -> tuple[NationalProbe, ...]:
             raise NationalProbeError("interregional probe must reference two regions")
         if item.get("coordinate_evidence") != "NOT_VERIFIED":
             raise NationalProbeError("coordinate evidence must be NOT_VERIFIED")
+        expectation = item.get("expected_outcome", "ROUTE")
+        if expectation not in ("ROUTE", "NO_ROUTE"):
+            raise NationalProbeError("expected_outcome must be ROUTE or NO_ROUTE")
         probes.append(NationalProbe(
             id=probe_id,
             kind=kind,
@@ -114,6 +120,7 @@ def parse_national_probes(value: object) -> tuple[NationalProbe, ...]:
             origin=_location(item.get("origin"), "origin"),
             destination=_location(item.get("destination"), "destination"),
             coordinate_evidence="NOT_VERIFIED",
+            expected_outcome=expectation,
         ))
     return tuple(probes)
 
@@ -169,6 +176,8 @@ def run_national_probes(
         raise NationalProbeError("at least one probe is required")
     results = []
     for probe in probes:
+        if probe.expected_outcome not in ("ROUTE", "NO_ROUTE"):
+            raise NationalProbeError("invalid probe expected_outcome")
         try:
             response = fetch_local_osrm_table(
                 [probe.origin], [probe.destination],
@@ -178,21 +187,33 @@ def run_national_probes(
                 max_snap_meters=max_snap_meters,
             )
             duration = response.matrix.pickup_seconds.get((probe.origin.id, probe.destination.id))
-            if duration is None:
-                result = NationalProbeResult(probe.id, probe.kind, probe.regions, "FAIL", None,
-                                             "NO_ROUTE_OR_UNREACHABLE", response.request_sha256,
-                                             response.matrix.provenance.response_sha256)
-            else:
-                result = NationalProbeResult(probe.id, probe.kind, probe.regions, "PASS", duration,
-                                             None, response.request_sha256,
-                                             response.matrix.provenance.response_sha256)
+            outcome = "NO_ROUTE" if duration is None else "ROUTE"
+            matches = outcome == probe.expected_outcome
+            reason = None if matches else (
+                "NO_ROUTE_OR_UNREACHABLE" if duration is None else "UNEXPECTED_ROUTE"
+            )
+            result = NationalProbeResult(
+                probe.id, probe.kind, probe.regions, "PASS" if matches else "FAIL",
+                duration, reason, response.request_sha256,
+                response.matrix.provenance.response_sha256, outcome, probe.expected_outcome,
+            )
+        except OsrmUnavailableError as exc:
+            result = NationalProbeResult(
+                probe.id, probe.kind, probe.regions, "INFRA_FAILURE", None,
+                str(exc), None, None, "INFRA_FAILURE", probe.expected_outcome,
+            )
         except MatrixInputError as exc:
-            result = NationalProbeResult(probe.id, probe.kind, probe.regions, "FAIL", None,
-                                         str(exc), None, None)
+            result = NationalProbeResult(
+                probe.id, probe.kind, probe.regions, "FAIL", None,
+                str(exc), None, None, "INVALID_INPUT_OR_RESPONSE", probe.expected_outcome,
+            )
         results.append(result)
     attempted_regions = {reg for probe in probes for reg in probe.regions}
-    covered_by_success = {reg for item in results if item.control_result == "PASS"
+    covered_by_success = {reg for item in results if item.control_result == "PASS" and item.route_outcome == "ROUTE"
                           for reg in item.regions}
+    overall = "INFRA_FAILURE" if any(item.control_result == "INFRA_FAILURE" for item in results) else (
+        "PASS" if all(item.control_result == "PASS" for item in results) else "FAIL"
+    )
     return {
         "country_code": "PE",
         "probe_results": [item.__dict__ for item in results],
@@ -202,8 +223,10 @@ def run_national_probes(
         "jurisdictions_with_passing_probe": sorted(covered_by_success),
         "counts": {"probes_total": len(results),
                    "queries_pass": sum(item.control_result == "PASS" for item in results),
-                   "queries_fail": sum(item.control_result == "FAIL" for item in results)},
-        "route_query_control_result": "PASS" if all(item.control_result == "PASS" for item in results) else "FAIL",
+                   "queries_fail": sum(item.control_result != "PASS" for item in results)},
+        "route_query_control_result": overall,
+        "route_outcome_counts": {outcome: sum(item.route_outcome == outcome for item in results)
+                                 for outcome in ("ROUTE", "NO_ROUTE", "INFRA_FAILURE", "INVALID_INPUT_OR_RESPONSE")},
         "nationwide_coverage_control_result": "NOT_VERIFIED",
         "eta_accuracy_control_result": "NOT_VERIFIED",
         "road_data_quality_control_result": "NOT_VERIFIED",
