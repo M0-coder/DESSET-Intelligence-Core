@@ -2,6 +2,7 @@
 
 from .dispatch import Assignment, Courier, DispatchResult, Order, dispatch
 from .fleet import FleetPlan, FleetVehicle, VehicleAssignment, optimize_fleet
+from .fleet_repair import optimize_fleet_repaired
 from .fleet_heuristic import optimize_fleet_adaptive, optimize_fleet_insertion
 from .multistop import (
     DeliveryJob,
@@ -42,6 +43,7 @@ __all__ = [
     "optimize_fleet",
     "optimize_fleet_adaptive",
     "optimize_fleet_insertion",
+    "optimize_fleet_repaired",
     "optimize_multistop",
     "parse_osrm_table",
 ]
