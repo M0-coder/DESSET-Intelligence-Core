@@ -1,0 +1,106 @@
+name: INT-012 Peru real OSRM experiment
+on:
+  push:
+    branches:
+      - feature/int-012-peru-real-osrm-trial-v01
+permissions:
+  contents: read
+concurrency:
+  group: int012-peru-real-osrm-experiment
+  cancel-in-progress: false
+jobs:
+  real-osrm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      PBF_NAME: peru-261123.osm.pbf
+      SOURCE: https://download.geofabrik.de/south-america/peru
+      IMAGE: ghcr.io/project-osrm/osrm-backend@sha256:5116c66d814485be70bc7b239be890e4d36f62b1025a2f1c8139c20fa2697309
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Resource and identity preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD
+          uname -a
+          free -m
+          df -h "$RUNNER_TEMP"
+          docker version
+          python3 --version
+          test "$(uname -m)" = x86_64
+          test "$(awk '/MemTotal/{print $2}' /proc/meminfo)" -ge 12000000
+          test "$(df --output=avail -B1 "$RUNNER_TEMP" | tail -1)" -ge 10000000000
+      - name: Download dated public Peru PBF and verify source checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir "$RUNNER_TEMP/int012"
+          cd "$RUNNER_TEMP/int012"
+          curl --fail --silent --show-error --retry 2 --connect-timeout 20 --max-time 300 --proto '=https' --tlsv1.2 --output "$PBF_NAME.md5" "$SOURCE/$PBF_NAME.md5"
+          python3 -c 'import pathlib,re,os; name=os.environ["PBF_NAME"]; text=pathlib.Path(name+".md5").read_text(); assert re.fullmatch(r"[0-9a-fA-F]{32} [ *]"+re.escape(name)+r"\s*", text), "unexpected source checksum file"'
+          curl --fail --silent --show-error --retry 2 --connect-timeout 20 --max-time 900 --proto '=https' --tlsv1.2 --max-filesize 500000000 --output "$PBF_NAME" "$SOURCE/$PBF_NAME"
+          md5sum --check --strict "$PBF_NAME.md5"
+          cat "$PBF_NAME.md5"
+          stat -c 'PBF bytes=%s' "$PBF_NAME"
+          sha256sum "$PBF_NAME" | tee pbf.sha256
+          echo "Source: $SOURCE/$PBF_NAME"
+          echo "Attribution: © OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright"
+          echo "Source MD5 obtained over HTTPS; SHA256 computed after download; no independent source signature."
+      - name: Pull and inspect pinned OSRM amd64 image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull --platform linux/amd64 "$IMAGE"
+          docker image inspect --format 'ImageID={{.Id}} Architecture={{.Architecture}} RepoDigests={{json .RepoDigests}}' "$IMAGE"
+          docker run --rm --pull never --network none "$IMAGE" osrm-routed --version
+          docker run --rm --pull never --network none --entrypoint sha256sum "$IMAGE" /opt/car.lua
+      - name: Build private Peru graph using existing MLD builder
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIR="$RUNNER_TEMP/int012"
+          PBF="$DIR/$PBF_NAME"
+          SHA="$(cut -d' ' -f1 "$DIR/pbf.sha256")"
+          time bash scripts/build_peru_osrm.sh "$PBF" "$SHA" "$IMAGE"
+          shopt -s nullglob
+          graphs=("$DIR"/peru-261123.osrm-build.*)
+          test "${#graphs[@]}" -eq 1
+          printf 'GRAPH_DIR=%s\n' "${graphs[0]}" >> "$GITHUB_ENV"
+          df -h "$DIR"
+          du -sh "${graphs[0]}"
+      - name: Execute real local routes and print evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIR="$RUNNER_TEMP/int012"
+          SHA="$(cut -d' ' -f1 "$DIR/pbf.sha256")"
+          export PYTHONPATH=src
+          PBF_SHA="$SHA" python3 -c 'import os,json,pathlib; from desset_core.graph_evidence import verify_staged_peru_graph; print(json.dumps(verify_staged_peru_graph(pathlib.Path(os.environ["GRAPH_DIR"]),expected_pbf_sha256=os.environ["PBF_SHA"],expected_image_reference=os.environ["IMAGE"]),indent=2))'
+          CID="$(docker run -d --pull never -p 127.0.0.1:5000:5000 --mount "type=bind,src=$GRAPH_DIR,dst=/data,readonly" "$IMAGE" osrm-routed --algorithm mld /data/peru-261123.osrm)"
+          trap 'docker logs --tail 100 "$CID" || true; docker rm -f "$CID" >/dev/null || true' EXIT
+          docker inspect --format 'Container={{.Id}} Image={{.Image}} Command={{json .Config.Cmd}} Mounts={{json .Mounts}} Ports={{json .NetworkSettings.Ports}}' "$CID"
+          test "$(docker inspect --format '{{.Image}}' "$CID")" = "$(docker image inspect --format '{{.Id}}' "$IMAGE")"
+          ready=false
+          for attempt in $(seq 1 60); do
+            if curl --noproxy '*' -fsS --max-time 2 'http://127.0.0.1:5000/nearest/v1/driving/-77.043,-12.046?number=1' > "$DIR/ready.json"; then
+              ready=true
+              break
+            fi
+            if [ "$(docker inspect --format '{{.State.Running}}' "$CID")" != true ]; then break; fi
+            sleep 2
+          done
+          test "$ready" = true
+          cat "$DIR/ready.json"
+          rc=0
+          time python3 scripts/probe_peru_osrm.py --scenarios scenarios/peru-national-probes.json --pbf "$DIR/$PBF_NAME" --pbf-sha256 "$SHA" --dataset-ref "$SOURCE/$PBF_NAME#sha256=$SHA" --profile car-prototype-unverified --base-url http://127.0.0.1:5000 --graph-dir "$GRAPH_DIR" --image-reference "$IMAGE" --output "$DIR/report.json" || rc=$?
+          if [ -f "$DIR/report.json" ]; then
+            echo "=== REAL OSRM PROBE REPORT ==="
+            cat "$DIR/report.json"
+            sha256sum "$DIR/report.json"
+          fi
+          echo "Probe exit code=$rc; real road estimates only, not observed ETA or national coverage."
+          exit "$rc"
