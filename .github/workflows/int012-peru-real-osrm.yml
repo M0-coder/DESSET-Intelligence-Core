@@ -14,6 +14,7 @@ jobs:
     timeout-minutes: 40
     env:
       PBF_NAME: peru-261123.osm.pbf
+      EXPECTED_PBF_SHA256: 4452f694b54a9c3fd4b15db11d858d7007159488d85c4a4def69b7ef83c1e522
       SOURCE: https://download.geofabrik.de/south-america/peru
       IMAGE: ghcr.io/project-osrm/osrm-backend@sha256:5116c66d814485be70bc7b239be890e4d36f62b1025a2f1c8139c20fa2697309
     steps:
@@ -47,6 +48,7 @@ jobs:
           cat "$PBF_NAME.md5"
           stat -c 'PBF bytes=%s' "$PBF_NAME"
           sha256sum "$PBF_NAME" | tee pbf.sha256
+          test "$(cut -d' ' -f1 pbf.sha256)" = "$EXPECTED_PBF_SHA256"
           echo "Source: $SOURCE/$PBF_NAME"
           echo "Attribution: © OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright"
           echo "Source MD5 obtained over HTTPS; SHA256 computed after download; no independent source signature."
@@ -80,7 +82,7 @@ jobs:
           SHA="$(cut -d' ' -f1 "$DIR/pbf.sha256")"
           export PYTHONPATH=src
           PBF_SHA="$SHA" python3 -c 'import os,json,pathlib; from desset_core.graph_evidence import verify_staged_peru_graph; print(json.dumps(verify_staged_peru_graph(pathlib.Path(os.environ["GRAPH_DIR"]),expected_pbf_sha256=os.environ["PBF_SHA"],expected_image_reference=os.environ["IMAGE"]),indent=2))'
-          CID="$(docker run -d --pull never -p 127.0.0.1:5000:5000 --mount "type=bind,src=$GRAPH_DIR,dst=/data,readonly" "$IMAGE" osrm-routed --algorithm mld /data/peru-261123.osrm)"
+          CID="$(docker run -d --pull never --user "$(id -u):$(id -g)" -p 127.0.0.1:5000:5000 --mount "type=bind,src=$GRAPH_DIR,dst=/data,readonly" "$IMAGE" osrm-routed --algorithm mld /data/peru-261123.osrm)"
           trap 'docker logs --tail 100 "$CID" || true; docker rm -f "$CID" >/dev/null || true' EXIT
           docker inspect --format 'Container={{.Id}} Image={{.Image}} Command={{json .Config.Cmd}} Mounts={{json .Mounts}} Ports={{json .NetworkSettings.Ports}}' "$CID"
           test "$(docker inspect --format '{{.Image}}' "$CID")" = "$(docker image inspect --format '{{.Id}}' "$IMAGE")"

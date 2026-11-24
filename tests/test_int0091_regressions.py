@@ -119,6 +119,10 @@ class BuildPreflightTests(unittest.TestCase):
             self.assertTrue(log.exists())
             calls = log.read_text(encoding="utf-8")
             self.assertEqual(calls.count("run --rm"), 3)
+            # Regression: every OSRM writer must use the invoking host identity.
+            for call in calls.splitlines():
+                if call.startswith("run "):
+                    self.assertIn(f"--user {os.getuid()}:{os.getgid()} ", call)
             self.assertIn("--network none", calls)
             self.assertIn(str(staging), calls)
 
