@@ -1,0 +1,110 @@
+{
+  "python": "3.13.5",
+  "data": "synthetic_sparse_directed_fixed_seeds",
+  "metric": "per_instance_wallclock_sequential_no_warmup_not_SLA",
+  "quality": "served_priority_then_total_travel_seconds_only",
+  "not_verified": [
+    "real_peru_roads",
+    "ETA",
+    "production_load",
+    "p95_p99"
+  ],
+  "records": [
+    {
+      "vehicles": 3,
+      "jobs": 7,
+      "arc_probability": 0.65,
+      "seeds": [
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110
+      ],
+      "samples": 10,
+      "baseline_served_sum": 38,
+      "repaired_served_sum": 48,
+      "scenarios_with_more_served": 6,
+      "served_delta_values": [
+        1,
+        0,
+        0,
+        2,
+        2,
+        2,
+        1,
+        0,
+        2,
+        0
+      ],
+      "baseline_wallclock_median_ms": 0.296,
+      "repair_wallclock_median_ms": 1.887,
+      "paired_runtime_median_ratio": 7.941
+    },
+    {
+      "vehicles": 6,
+      "jobs": 16,
+      "arc_probability": 0.6,
+      "seeds": [
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209,
+        210
+      ],
+      "samples": 10,
+      "baseline_served_sum": 125,
+      "repaired_served_sum": 128,
+      "scenarios_with_more_served": 3,
+      "served_delta_values": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "baseline_wallclock_median_ms": 2.7439999999999998,
+      "repair_wallclock_median_ms": 5.015499999999999,
+      "paired_runtime_median_ratio": 2.092
+    },
+    {
+      "vehicles": 10,
+      "jobs": 32,
+      "arc_probability": 0.55,
+      "seeds": [
+        301,
+        302,
+        303,
+        304
+      ],
+      "samples": 4,
+      "baseline_served_sum": 95,
+      "repaired_served_sum": 96,
+      "scenarios_with_more_served": 1,
+      "served_delta_values": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "baseline_wallclock_median_ms": 20.625999999999998,
+      "repair_wallclock_median_ms": 25.1815,
+      "paired_runtime_median_ratio": 1.173
+    }
+  ]
+}

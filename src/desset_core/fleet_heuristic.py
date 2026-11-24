@@ -307,4 +307,6 @@ def optimize_fleet_adaptive(
         and len(jobs) <= MAX_FLEET_JOBS
     ):
         return optimize_fleet(vehicles, jobs, travel_seconds)
-    return optimize_fleet_insertion(vehicles, jobs, travel_seconds)
+    from .fleet_repair import optimize_fleet_repaired
+
+    return optimize_fleet_repaired(vehicles, jobs, travel_seconds)
