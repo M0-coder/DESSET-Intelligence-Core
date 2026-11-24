@@ -111,3 +111,21 @@ El constructor opt-in de OSRM rechaza archivos de grafo anteriores y crea una ca
 ## INT-010 — Reparación acotada de asignación de flota (PR en revisión)
 
 `optimize_fleet_repaired()` empieza con el heurístico anterior y ejecuta hasta dos rondas de reparación local: extrae un pedido ya asignado y busca con el motor exacto una ruta conjunta que también incluya uno pendiente. Sólo acepta soluciones que **atiendan estrictamente más pedidos sin perder ninguno de los anteriores**; puede aumentar el tiempo total al atender más. El flujo adaptativo mantiene el exacto para lotes pequeños y prueba la reparación para lotes mayores. La búsqueda está deliberadamente acotada (48 evaluaciones exactas por ronda y cinco pedidos en ruta receptora); **no garantiza optimalidad ni recuperación completa**. Comparación con baseline reproducible en `benchmarks/bench_fleet_repair.py`, datos artificiales, sin rutas reales del Perú ni SLA. [ADR-010](docs/ADR-010-bounded-fleet-coverage-repair.md).
+
+## INT-011: gate de archivos del grafo nacional (PR independiente)
+
+Para contrastar archivos de un grafo OSRM construido con un PBF de Perú, el probe nacional incorpora parámetros optativos de evidencia. Se especifican **ambos** o ninguno; no hay descarga ni ejecución de contenedores implícita:
+
+```bash
+PYTHONPATH=src python scripts/probe_peru_osrm.py \
+  --scenarios scenarios/peru-national-probes.json \
+  --pbf /ruta/peru-YYMMDD.osm.pbf \
+  --pbf-sha256 SHA256_REAL_DEL_ARCHIVO \
+  --dataset-ref peru-YYMMDD \
+  --graph-dir /ruta/peru-YYMMDD.osrm-build.XXXXXXXX \
+  --image-reference ghcr.io/project-osrm/osrm-backend@sha256:DIGEST_REAL \
+  --base-url http://127.0.0.1:5000 \
+  --output evidencia-peru.json
+```
+
+`--graph-dir` debe contener PBF fechado, inventario creado por `build_peru_osrm.sh` y archivos de grafo con hashes válidos. El comando falla cerrado ante discrepancias y **nunca** demuestra que el daemon use ese grafo: el informe declara `daemon_graph_binding_control_result=NOT_VERIFIED`, `nationwide_coverage_control_result=NOT_VERIFIED`, `candidate_decision=BLOCKED`. Las pruebas de CI usan archivos/servidor **simulados**; OSRM auténtico y cartografía vial efectiva requieren otro control en la infraestructura autorizada. [ADR-011](docs/ADR-011-peru-graph-evidence-gate.md).
