@@ -3,7 +3,12 @@
 import random
 import unittest
 
-from desset_core import DeliveryJob, FleetVehicle, optimize_fleet_adaptive, optimize_fleet_insertion
+from desset_core import (
+    DeliveryJob,
+    FleetVehicle,
+    optimize_fleet_adaptive,
+    optimize_fleet_insertion,
+)
 from desset_core.fleet_repair import optimize_fleet_repaired
 
 
@@ -148,7 +153,7 @@ class RepairTests(unittest.TestCase):
         self.assertNotEqual(expected, disabled)
 
     def test_empty_vehicles_and_invalid_inputs_preserve_original_contract(self):
-        fleet, jobs, times = gap_case()
+        fleet, jobs, _ = gap_case()
         self.assertEqual(optimize_fleet_repaired([], jobs, {}).served_job_count, 0)
         self.assertEqual(optimize_fleet_repaired(fleet, [], {}).routes, ())
         with self.assertRaises(ValueError):
