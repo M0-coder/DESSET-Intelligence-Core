@@ -2,8 +2,8 @@
 
 from .dispatch import Assignment, Courier, DispatchResult, Order, dispatch
 from .fleet import FleetPlan, FleetVehicle, VehicleAssignment, optimize_fleet
-from .fleet_repair import optimize_fleet_repaired
 from .fleet_heuristic import optimize_fleet_adaptive, optimize_fleet_insertion
+from .fleet_repair import optimize_fleet_repaired
 from .multistop import (
     DeliveryJob,
     MultiStopPlan,
