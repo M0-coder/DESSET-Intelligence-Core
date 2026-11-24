@@ -1,12 +1,14 @@
-name: INT-012 Peru real OSRM experiment
+name: INT-012.2 Peru real OSRM resilient trial
 on:
   push:
     branches:
-      - feature/int-012-peru-real-osrm-trial-v01
+      - feature/int-0122-peru-real-osrm-retry-v01
+    paths:
+      - .github/workflows/int012-peru-real-osrm.yml
 permissions:
   contents: read
 concurrency:
-  group: int012-peru-real-osrm-experiment
+  group: int0122-peru-real-osrm-experiment
   cancel-in-progress: false
 jobs:
   real-osrm:
@@ -14,6 +16,7 @@ jobs:
     timeout-minutes: 40
     env:
       PBF_NAME: peru-261123.osm.pbf
+      EXPECTED_SOURCE_MD5: 475584a771f245ccb28fe0908a099e6c
       EXPECTED_PBF_SHA256: 4452f694b54a9c3fd4b15db11d858d7007159488d85c4a4def69b7ef83c1e522
       SOURCE: https://download.geofabrik.de/south-america/peru
       IMAGE: ghcr.io/project-osrm/osrm-backend@sha256:5116c66d814485be70bc7b239be890e4d36f62b1025a2f1c8139c20fa2697309
@@ -41,9 +44,10 @@ jobs:
           umask 077
           mkdir "$RUNNER_TEMP/int012"
           cd "$RUNNER_TEMP/int012"
-          curl --fail --silent --show-error --retry 2 --connect-timeout 20 --max-time 300 --proto '=https' --tlsv1.2 --output "$PBF_NAME.md5" "$SOURCE/$PBF_NAME.md5"
+          curl --fail --silent --show-error --retry 4 --retry-connrefused --retry-max-time 120 --connect-timeout 20 --max-time 300 --proto '=https' --tlsv1.2 --output "$PBF_NAME.md5" "$SOURCE/$PBF_NAME.md5"
           python3 -c 'import pathlib,re,os; name=os.environ["PBF_NAME"]; text=pathlib.Path(name+".md5").read_text(); assert re.fullmatch(r"[0-9a-fA-F]{32} [ *]"+re.escape(name)+r"\s*", text), "unexpected source checksum file"'
-          curl --fail --silent --show-error --retry 2 --connect-timeout 20 --max-time 900 --proto '=https' --tlsv1.2 --max-filesize 500000000 --output "$PBF_NAME" "$SOURCE/$PBF_NAME"
+          curl --fail --silent --show-error --retry 4 --retry-connrefused --retry-max-time 300 --connect-timeout 20 --max-time 900 --proto '=https' --tlsv1.2 --max-filesize 500000000 --output "$PBF_NAME" "$SOURCE/$PBF_NAME"
+          test "$(cut -d' ' -f1 "$PBF_NAME.md5" | tr 'A-F' 'a-f')" = "$EXPECTED_SOURCE_MD5"
           md5sum --check --strict "$PBF_NAME.md5"
           cat "$PBF_NAME.md5"
           stat -c 'PBF bytes=%s' "$PBF_NAME"
@@ -51,7 +55,7 @@ jobs:
           test "$(cut -d' ' -f1 pbf.sha256)" = "$EXPECTED_PBF_SHA256"
           echo "Source: $SOURCE/$PBF_NAME"
           echo "Attribution: © OpenStreetMap contributors; ODbL 1.0; https://www.openstreetmap.org/copyright"
-          echo "Source MD5 obtained over HTTPS; SHA256 computed after download; no independent source signature."
+          echo "Source MD5 and downloaded SHA256 match previously observed snapshot; no independent source signature."
       - name: Pull and inspect pinned OSRM amd64 image
         shell: bash
         run: |
