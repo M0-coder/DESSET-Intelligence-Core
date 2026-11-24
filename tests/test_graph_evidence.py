@@ -4,8 +4,8 @@ import hashlib
 import json
 import subprocess
 import sys
-import threading
 import tempfile
+import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
