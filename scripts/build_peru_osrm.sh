@@ -17,7 +17,7 @@ fi
 if [[ ! "$IMAGE" =~ ^ghcr.io/project-osrm/osrm-backend@sha256:[0-9a-f]{64}$ ]]; then
   echo "image MUST use verified immutable digest" >&2; exit 2
 fi
-for command in docker sha256sum python3 realpath; do
+for command in docker sha256sum python3 realpath id; do
   command -v "$command" >/dev/null || { echo "missing prerequisite: $command" >&2; exit 2; }
 done
 PBF_REAL="$(realpath "$PBF")"
@@ -41,6 +41,8 @@ fi
 # Build only in a new private staging directory; source PBF remains untouched.
 # Keep partial staging directories on failure for review; no silent cleanup.
 # Explicitly budget disk/memory before use (PBF is copied; graph can be large).
+# Match the invoking account so artifacts can be hashed without widening permissions.
+OSRM_USER="$(id -u):$(id -g)"
 umask 077
 BUILD_DIR="$(mktemp -d "$DIRECTORY/${NAME%.osm.pbf}.osrm-build.XXXXXXXX")"
 cp -- "$PBF_REAL" "$BUILD_DIR/$NAME"
@@ -48,11 +50,11 @@ COPIED_SHA="$(sha256sum "$BUILD_DIR/$NAME" | cut -d' ' -f1)"
 if [[ "$COPIED_SHA" != "$EXPECTED" ]]; then
   echo "staged PBF SHA-256 mismatch: refusing build" >&2; exit 2
 fi
-docker run --rm --pull never --network none --mount "type=bind,src=$BUILD_DIR,dst=/data" "$IMAGE" \
+docker run --rm --pull never --network none --user "$OSRM_USER" --mount "type=bind,src=$BUILD_DIR,dst=/data" "$IMAGE" \
   osrm-extract -p /opt/car.lua "/data/$NAME"
 BASE="/data/${NAME%.osm.pbf}.osrm"
-docker run --rm --pull never --network none --mount "type=bind,src=$BUILD_DIR,dst=/data" "$IMAGE" osrm-partition "$BASE"
-docker run --rm --pull never --network none --mount "type=bind,src=$BUILD_DIR,dst=/data" "$IMAGE" osrm-customize "$BASE"
+docker run --rm --pull never --network none --user "$OSRM_USER" --mount "type=bind,src=$BUILD_DIR,dst=/data" "$IMAGE" osrm-partition "$BASE"
+docker run --rm --pull never --network none --user "$OSRM_USER" --mount "type=bind,src=$BUILD_DIR,dst=/data" "$IMAGE" osrm-customize "$BASE"
 python3 - "$BUILD_DIR/$NAME" "$IMAGE" "$ACTUAL" <<'PYJSON'
 import datetime
 import hashlib
@@ -94,4 +96,4 @@ print(f"Build manifest: {out}")
 PYJSON
 echo "MLD graph prepared in $BUILD_DIR; original PBF untouched. No daemon was started."
 echo "To serve locally ONLY (separate decision):"
-echo "docker run --rm -p 127.0.0.1:5000:5000 --mount type=bind,src=$BUILD_DIR,dst=/data,readonly $IMAGE osrm-routed --algorithm mld $BASE"
+echo "docker run --rm --user $OSRM_USER -p 127.0.0.1:5000:5000 --mount type=bind,src=$BUILD_DIR,dst=/data,readonly $IMAGE osrm-routed --algorithm mld $BASE"
